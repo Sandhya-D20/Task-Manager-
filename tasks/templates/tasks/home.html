@@ -1,0 +1,138 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Task Manager</title>
+        <link rel="stylesheet", href="{% static 'tasks/style.css' %}" >
+    </head>
+    <body> 
+        <header>
+              <h1>My Task Manager</h1>
+        <p> Plan your week. Track your Progress.</p>
+        </header>
+       
+        <main>
+            <section>
+                <h2>This Week</h2>
+                <p> {{completed_tasks}}/3 main tasks completed</p>
+            </section>
+
+            <section> 
+                <h2>Weekly Tasks</h2>
+
+                <form method="post" class ="add-task-card">
+    {% csrf_token %}
+    <input type="hidden" name="form_type" value="weekly_task">
+    <input type="text" name="title" placeholder="Task title" required>
+
+    <textarea name="description" placeholder="Description"></textarea>
+
+    <input
+    type="text"
+    name="category"
+    placeholder="Category"
+    required
+>
+
+    <select name="priority" required>
+        <option value="high">High</option>
+        <option value="medium" selected>Medium</option>
+        <option value="low">Low</option>
+    </select>
+
+    <input type="date" name="deadline" required>
+
+    <button type="submit">Add Task</button>
+</form>
+
+                {% for task in weekly_tasks %}
+                <div class="task-card"> 
+                    <h3> {{task.title}}</h3>
+                    <p> {{task.description}}</p>
+                    <p>Deadline: {{task.deadline}}</p>
+                    <p>Priority: {{ task.get_priority_display }}</p>
+                    <p>Category: {{ task.category }}</p>
+                    <p class="task-status">
+                        Status: {{ task.get_status_display }}
+                    </p>
+
+                    <form method="post" action="{% url 'update_task' task.id %}">
+    {% csrf_token %}
+
+    <select name="status">
+        <option value="not_started" {% if task.status == "not_started" %}selected{% endif %}>
+            Not Started
+        </option>
+
+        <option value="in_progress" {% if task.status == "in_progress" %}selected{% endif %}>
+            In Progress
+        </option>
+
+        <option value="done" {% if task.status == "done" %}selected{% endif %}>
+            Done
+        </option>
+    </select>
+
+    <button type="submit">Update Status</button>
+</form>
+
+<form method="post" action="{% url 'delete_task' task.id %}">
+    {% csrf_token %}
+    <button type="submit">Delete Task</button>
+</form>
+
+                </div>
+                {% empty %}
+                <p> No tasks added for this week yet.</p>
+                {% endfor %}
+            </section>
+
+            <section>
+                <h2>Today's To-Do</h2>
+
+                <form method="post" class="add-todo-card">
+    {% csrf_token %}
+
+    <input
+        type="hidden"
+        name="form_type"
+        value="daily_todo"
+    >
+
+    <input
+        type="text"
+        name="todo_title"
+        placeholder="What do you need to do today?"
+        required
+    >
+
+    <button type="submit">Add To-Do</button>
+</form>
+                {% for todo in daily_todos %}
+    <div class="todo-item">
+
+        <form method="post" action="{% url 'toggle_todo' todo.id %}">
+            {% csrf_token %}
+
+            <button type="submit">
+                {% if todo.completed %}
+                    ✓
+                {% else %}
+                    ☐
+                {% endif %}
+            </button>
+
+            <span class="{% if todo.completed %}completed-todo{% endif %}">
+                {{ todo.title }}
+            </span>
+        </form>
+
+    </div>
+{% empty %}
+    <p>No to-dos for today.</p>
+{% endfor %}
+            </section>
+        </main>
+    </body>
+</html>
